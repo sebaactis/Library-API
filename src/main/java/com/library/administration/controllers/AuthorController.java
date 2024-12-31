@@ -1,9 +1,11 @@
 package com.library.administration.controllers;
 
+import com.library.administration.models.dti.AuthorDTI;
 import com.library.administration.models.dto.AuthorDTO;
 import com.library.administration.models.entities.Author;
 import com.library.administration.services.implementation.AuthorService;
 import com.library.administration.utilities.ApiResponse;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,15 +20,15 @@ public class AuthorController {
     private AuthorService authorService;
 
     @GetMapping("authors")
-    public ResponseEntity<ApiResponse<List<Author>>> findAll() {
-        List<Author> authors = (List<Author>) authorService.findAll();
+    public ResponseEntity<ApiResponse<List<AuthorDTO>>> findAll() {
+        List<AuthorDTO> authors = (List<AuthorDTO>) authorService.findAllAuthors();
 
         if (authors.isEmpty()) {
-            ApiResponse<List<Author>> response = new ApiResponse<>("We don´t have authors yet", null);
+            ApiResponse<List<AuthorDTO>> response = new ApiResponse<>("We don´t have authors yet", null);
             return ResponseEntity.status(404).body(response);
         }
 
-        ApiResponse<List<Author>> response = new ApiResponse<>("Get authors successfully", authors);
+        ApiResponse<List<AuthorDTO>> response = new ApiResponse<>("Get authors successfully", authors);
         return ResponseEntity.ok(response);
     }
 
@@ -44,7 +46,7 @@ public class AuthorController {
     }
 
     @PostMapping("author")
-    public ResponseEntity<ApiResponse<Author>> create(@RequestBody AuthorDTO authorRequest) {
+    public ResponseEntity<ApiResponse<Author>> create(@Valid @RequestBody AuthorDTI authorRequest) {
         Author author = new Author();
         author.setName(authorRequest.getName());
         author.setBirthDate(authorRequest.getBirthDate());
@@ -61,7 +63,7 @@ public class AuthorController {
     }
 
     @PutMapping("author/{id}")
-    public ResponseEntity<ApiResponse<Author>> update(@PathVariable Long id, @RequestBody AuthorDTO authorRequest) {
+    public ResponseEntity<ApiResponse<Author>> update(@PathVariable Long id, @RequestBody AuthorDTI authorRequest) {
         Author existingAuthor = authorService.findById(id);
 
         if(existingAuthor == null) {

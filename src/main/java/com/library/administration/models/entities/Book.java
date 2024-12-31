@@ -1,5 +1,6 @@
 package com.library.administration.models.entities;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,7 +17,8 @@ public class Book {
 
     private String title;
 
-    @ManyToOne
+    @JsonBackReference
+    @ManyToOne(fetch = FetchType.EAGER)
     private Author author;
 
     private String genre;
