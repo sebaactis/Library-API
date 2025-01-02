@@ -22,6 +22,7 @@ public class AuthorService extends ServiceImple<Author, Long> {
     public List<AuthorDTO> findAllAuthors() {
         return authorRepository.findAll().stream()
                 .map(author -> new AuthorDTO(
+                        author.getId(),
                         author.getName(),
                         author.getBirthDate(),
                         author.getBooks().stream()

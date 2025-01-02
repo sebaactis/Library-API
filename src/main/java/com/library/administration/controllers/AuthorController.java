@@ -8,9 +8,11 @@ import com.library.administration.utilities.ApiResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -21,7 +23,7 @@ public class AuthorController {
 
     @GetMapping("authors")
     public ResponseEntity<ApiResponse<List<AuthorDTO>>> findAll() {
-        List<AuthorDTO> authors = (List<AuthorDTO>) authorService.findAllAuthors();
+        List<AuthorDTO> authors = authorService.findAllAuthors();
 
         if (authors.isEmpty()) {
             ApiResponse<List<AuthorDTO>> response = new ApiResponse<>("We don´t have authors yet", null);
@@ -47,19 +49,27 @@ public class AuthorController {
 
     @PostMapping("author")
     public ResponseEntity<ApiResponse<Author>> create(@Valid @RequestBody AuthorDTI authorRequest) {
-        Author author = new Author();
-        author.setName(authorRequest.getName());
-        author.setBirthDate(authorRequest.getBirthDate());
+        try {
 
-        Author savedAuthor = authorService.save(author);
 
-        if (savedAuthor == null) {
-            ApiResponse<Author> response = new ApiResponse<>("Author created failed, try again", null);
-            return ResponseEntity.status(400).body(response);
+            Author author = new Author();
+            author.setName(authorRequest.getName());
+            author.setBirthDate(authorRequest.getBirthDate());
+
+            Author savedAuthor = authorService.save(author);
+
+            if (savedAuthor == null) {
+                throw new IllegalStateException("Failed to save the author");
+            }
+
+            ApiResponse<Author> response = new ApiResponse<>("Author created successfully", savedAuthor);
+            return ResponseEntity.status(201).body(response);
+
+        } catch (Exception e) {
+
+            ApiResponse<Author> response = new ApiResponse<>("An unexpected error occurred", null);
+            return ResponseEntity.status(500).body(response);
         }
-
-        ApiResponse<Author> response = new ApiResponse<>("Author created successfully", author);
-        return ResponseEntity.status(201).body(response);
     }
 
     @PutMapping("author/{id}")

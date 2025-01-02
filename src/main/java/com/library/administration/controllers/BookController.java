@@ -48,4 +48,17 @@ public class BookController {
         ApiResponse<Book> response = new ApiResponse<>("Book created successfully", createBook);
         return ResponseEntity.status(201).body(response);
     }
+
+    @PutMapping("/book/{bookId}/{authorId}")
+    public ResponseEntity<ApiResponse<Book>> changeAuthor(@PathVariable Long bookId, @PathVariable Long authorId) {
+        Book editBook = bookService.changeAuthor(bookId, authorId);
+
+        if (editBook == null) {
+            ApiResponse<Book> response = new ApiResponse<>("We cant edit the book, pleasy verify and try again", null);
+            return ResponseEntity.status(400).body(response);
+        }
+
+        ApiResponse<Book> response = new ApiResponse<>("Author from this book edited successfully", editBook);
+        return ResponseEntity.status(200).body(response);
+    }
 }

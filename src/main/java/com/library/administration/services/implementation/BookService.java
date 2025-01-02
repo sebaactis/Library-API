@@ -28,4 +28,18 @@ public class BookService extends ServiceImple<Book, Long> {
 
         return save(bookRequest);
     }
+
+    public Book changeAuthor(Long bookId, Long authorId) {
+        Author author = authorRepository.findById(authorId).orElse(null);
+
+        if(author == null) return null;
+
+        Book book = findById(bookId);
+
+        if(book == null) return null;
+
+        book.setAuthor(author);
+
+        return save(book);
+    }
 }

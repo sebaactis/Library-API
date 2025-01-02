@@ -10,7 +10,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 public class AuthorDTO {
-
+    private Long id;
     private String name;
     private LocalDate birthDate;
     private List<BookDTO> books;
