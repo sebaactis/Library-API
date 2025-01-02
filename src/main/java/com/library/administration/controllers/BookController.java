@@ -3,6 +3,7 @@ package com.library.administration.controllers;
 import com.library.administration.models.dti.BookDTI;
 import com.library.administration.models.dto.AuthorDTO;
 import com.library.administration.models.dto.BookDTO;
+import com.library.administration.models.entities.Author;
 import com.library.administration.models.entities.Book;
 import com.library.administration.services.implementation.BookService;
 import com.library.administration.utilities.ApiResponse;
@@ -44,6 +45,29 @@ public class BookController {
             ApiResponse<List<BookDTO>> response = new ApiResponse<>(e.getMessage(), null);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
+    }
+
+    @GetMapping("book/{bookId}")
+    public ResponseEntity<ApiResponse<BookDTO>> findById(@PathVariable Long bookId) {
+
+        try {
+            Book book = bookService.findById(bookId);
+
+            if (book == null) {
+                ApiResponse<BookDTO> response = new ApiResponse<>("Book not found, please try with another", null);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+
+            ModelMapper modelMapper = new ModelMapper();
+            BookDTO bookDTO = modelMapper.map(book, BookDTO.class);
+
+            ApiResponse<BookDTO> response = new ApiResponse<>("Book found!", bookDTO);
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            ApiResponse<BookDTO> response = new ApiResponse<>(e.getMessage(), null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
 
     }
 
@@ -76,15 +100,81 @@ public class BookController {
     }
 
     @PutMapping("/book/{bookId}/{authorId}")
-    public ResponseEntity<ApiResponse<Book>> changeAuthor(@PathVariable Long bookId, @PathVariable Long authorId) {
-        Book editBook = bookService.changeAuthor(bookId, authorId);
+    public ResponseEntity<ApiResponse<BookDTO>> changeAuthor(@PathVariable Long bookId, @PathVariable Long authorId) {
+        try {
+            Book editBook = bookService.changeAuthor(bookId, authorId);
 
-        if (editBook == null) {
-            ApiResponse<Book> response = new ApiResponse<>("We cant edit the book, pleasy verify and try again", null);
-            return ResponseEntity.status(400).body(response);
+            if (editBook == null) {
+                ApiResponse<BookDTO> response = new ApiResponse<>("We cant edit the book, please verify and try again", null);
+                return ResponseEntity.status(400).body(response);
+            }
+
+            ModelMapper modelMapper = new ModelMapper();
+            BookDTO bookDTO = modelMapper.map(editBook, BookDTO.class);
+
+            ApiResponse<BookDTO> response = new ApiResponse<>("Author from this book edited successfully", bookDTO);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
+        } catch (Exception e) {
+            ApiResponse<BookDTO> response = new ApiResponse<>(e.getMessage(), null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
+    }
 
-        ApiResponse<Book> response = new ApiResponse<>("Author from this book edited successfully", editBook);
-        return ResponseEntity.status(200).body(response);
+    @PutMapping("/book/{bookId}")
+    public ResponseEntity<ApiResponse<BookDTO>> edit(@PathVariable Long bookId, @Valid @RequestBody BookDTI requestBook) {
+        try {
+            Book editBook = bookService.findById(bookId);
+
+            if (editBook == null) {
+                ApiResponse<BookDTO> response = new ApiResponse<>("Book not found!", null);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+
+            if (requestBook.getTitle() != null) {
+                editBook.setTitle(requestBook.getTitle());
+            }
+            if (requestBook.getGenre() != null) {
+                editBook.setGenre(requestBook.getGenre());
+            }
+            if (requestBook.getPublished() != null) {
+                editBook.setPublished(requestBook.getPublished());
+            }
+
+            Book bookSave = bookService.save(editBook);
+
+            ModelMapper modelMapper = new ModelMapper();
+            BookDTO bookDTO = modelMapper.map(bookSave, BookDTO.class);
+
+            ApiResponse<BookDTO> response = new ApiResponse<>("Book edited successfully", bookDTO);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
+
+        } catch (Exception e) {
+            ApiResponse<BookDTO> response = new ApiResponse<>(e.getMessage(), null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @DeleteMapping("/book/{bookId}")
+    public ResponseEntity<ApiResponse<BookDTO>> delete(@PathVariable Long bookId) {
+        try {
+            Book existingBook = bookService.findById(bookId);
+
+            if (existingBook == null) {
+                ApiResponse<BookDTO> response = new ApiResponse<>("The book with the id provided doesn't exists", null);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+
+            bookService.deleteById(bookId);
+
+            ModelMapper modelMapper = new ModelMapper();
+            BookDTO bookDto = modelMapper.map(existingBook, BookDTO.class);
+
+            ApiResponse<BookDTO> response = new ApiResponse<>("Book deleted successfully", bookDto);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
+
+        } catch (Exception e) {
+            ApiResponse<BookDTO> response = new ApiResponse<>(e.getMessage(), null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
 }
