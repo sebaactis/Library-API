@@ -1,9 +1,12 @@
 package com.library.administration.controllers;
 
+import com.library.administration.models.dti.BookDTI;
 import com.library.administration.models.dti.UserDTI;
+import com.library.administration.models.dti.UserEditDTI;
 import com.library.administration.models.dto.BookDTO;
 import com.library.administration.models.dto.UserDTO;
 import com.library.administration.models.entities.Book;
+import com.library.administration.models.entities.Role;
 import com.library.administration.models.entities.User;
 import com.library.administration.services.implementation.UserService;
 import com.library.administration.utilities.ApiResponse;
@@ -25,7 +28,6 @@ public class UserController {
 
     @GetMapping("/users")
     public ResponseEntity<ApiResponse<List<UserDTO>>> findAll() {
-
         try {
             List<User> users = (List<User>) userService.findAll();
 
@@ -47,6 +49,28 @@ public class UserController {
         }
     }
 
+    @GetMapping("/users/{userId}")
+    public ResponseEntity<ApiResponse<UserDTO>> findById(@PathVariable Long userId) {
+        try {
+            User user = userService.findById(userId);
+
+            if (user == null) {
+                ApiResponse<UserDTO> response = new ApiResponse<>("User not found, please try with another ID", null);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+
+            ModelMapper modelMapper = new ModelMapper();
+            UserDTO userDTO = modelMapper.map(user, UserDTO.class);
+
+            ApiResponse<UserDTO> response = new ApiResponse<>("User found!", userDTO);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
+
+        } catch (Exception e) {
+            ApiResponse<UserDTO> response = new ApiResponse<>(e.getMessage(), null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
     @PostMapping("/users")
     public ResponseEntity<ApiResponse<UserDTO>> create(@Valid @RequestBody UserDTI userRequest) {
         try {
@@ -62,6 +86,30 @@ public class UserController {
 
             ApiResponse<UserDTO> response = new ApiResponse<>("User created successfully", userDTO);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
+        } catch (Exception e) {
+            ApiResponse<UserDTO> response = new ApiResponse<>(e.getMessage(), null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @PutMapping("/users/{userId}")
+    public ResponseEntity<ApiResponse<UserDTO>> edit(@PathVariable Long userId, @Valid @RequestBody UserEditDTI requestUser) {
+        try {
+            User editUser = userService.findById(userId);
+
+            if (editUser == null) {
+                ApiResponse<UserDTO> response = new ApiResponse<>("User not found!", null);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+
+            User userSave = userService.editUser(editUser, requestUser);
+
+            ModelMapper modelMapper = new ModelMapper();
+            UserDTO userDTO = modelMapper.map(userSave, UserDTO.class);
+
+            ApiResponse<UserDTO> response = new ApiResponse<>("User edited successfully", userDTO);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
 
         } catch (Exception e) {
             ApiResponse<UserDTO> response = new ApiResponse<>(e.getMessage(), null);

@@ -1,6 +1,7 @@
 package com.library.administration.services.implementation;
 
 import com.library.administration.models.dti.UserDTI;
+import com.library.administration.models.dti.UserEditDTI;
 import com.library.administration.models.entities.Role;
 import com.library.administration.models.entities.User;
 import com.library.administration.repositories.UserRepository;
@@ -23,6 +24,10 @@ public class UserService extends ServiceImple<User, Long> {
 
     public User createHashedUser(UserDTI userRequest) {
 
+        if (userRepository.existsByEmail(userRequest.getEmail())) {
+            throw new IllegalArgumentException("The email: " + userRequest.getEmail() + " is already in use, choose another");
+        }
+
         if (!isValidRole(userRequest.getRole())) {
             throw new IllegalArgumentException("Role not valid: " + userRequest.getRole());
         }
@@ -36,6 +41,25 @@ public class UserService extends ServiceImple<User, Long> {
         user.setPassword(passwordHashed);
 
         return userRepository.save(user);
+    }
+
+    public User editUser(User editUser, UserEditDTI requestUser) {
+
+        if (requestUser.getUsername() != null) {
+            editUser.setUsername(requestUser.getUsername());
+        }
+        if (requestUser.getEmail() != null) {
+            editUser.setEmail(requestUser.getEmail());
+        }
+        if (requestUser.getRole() != null) {
+            if (!isValidRole(requestUser.getRole())) {
+                throw new IllegalArgumentException("Role not valid: " + requestUser.getRole());
+            }
+
+            editUser.setRole(Role.valueOf(requestUser.getRole().toUpperCase()));
+        }
+
+        return userRepository.save(editUser);
     }
 
     private boolean isValidRole(String role) {
