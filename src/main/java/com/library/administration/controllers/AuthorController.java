@@ -33,7 +33,7 @@ public class AuthorController {
             }
 
             ApiResponse<List<AuthorDTO>> response = new ApiResponse<>("Get authors successfully", authors);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
 
         } catch (Exception e) {
             ApiResponse<List<AuthorDTO>> response = new ApiResponse<>(e.getMessage(), null);

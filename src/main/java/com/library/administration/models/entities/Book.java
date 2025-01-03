@@ -15,13 +15,16 @@ public class Book {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String title;
 
     @JsonBackReference
     @ManyToOne(fetch = FetchType.EAGER)
     private Author author;
 
+    @Column(nullable = false)
     private String genre;
 
+    @Column(nullable = false)
     private LocalDate published;
 }
