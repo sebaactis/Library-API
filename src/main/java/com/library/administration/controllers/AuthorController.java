@@ -62,7 +62,6 @@ public class AuthorController {
             ApiResponse<AuthorDTO> response = new ApiResponse<>(e.getMessage(), null);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-
     }
 
     @PostMapping("author")
