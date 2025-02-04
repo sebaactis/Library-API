@@ -1,9 +1,8 @@
 package com.library.administration.security;
 
-import com.library.administration.utilities.JwtConfig;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
+import com.library.administration.models.entities.Token;
+import com.library.administration.repositories.TokenRepository;
+import com.library.administration.utilities.Jwt.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,19 +13,21 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 
+@Component
 public class JwtAuthFilter extends OncePerRequestFilter {
 
-    private final JwtConfig jwtConfig;
+    private final JwtUtil jwtUtil;
+    private final TokenRepository tokenRepository;
 
-    @Autowired
-    public JwtAuthFilter(JwtConfig jwtConfig) {
-        this.jwtConfig = jwtConfig;
+    public JwtAuthFilter(JwtUtil jwtUtil, TokenRepository tokenRepository) {
+        this.jwtUtil = jwtUtil;
+        this.tokenRepository = tokenRepository;
     }
 
     @Override
@@ -41,13 +42,18 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String token = authorizationHeader.substring(7);
 
         try {
-            Claims claims = Jwts.parserBuilder()
-                    .setSigningKey(Keys.hmacShaKeyFor(jwtConfig.getSecretKey().getBytes(StandardCharsets.UTF_8)))
-                    .build()
-                    .parseClaimsJws(token)
-                    .getBody();
+            if (jwtUtil.IsTokenExpired(token)) {
+                throw new IllegalArgumentException("Token expired");
+            }
 
-            String email = claims.getSubject();
+            Token tokenEntity = tokenRepository.findByToken(token)
+                    .orElseThrow(() -> new IllegalArgumentException("Token not found"));
+
+            if (tokenEntity.isRevoked() || tokenEntity.isExpired()) {
+                throw new IllegalArgumentException("Token revoked or expired");
+            }
+
+            String email = jwtUtil.extractEmail(token);
 
             if (email != null) {
                 UserDetails userDetails = new User(email, "", Collections.emptyList());
