@@ -18,5 +18,8 @@ public class LoginDTO {
     private String username;
 
     @NotBlank
-    private String token;
+    private String accessToken;
+
+    @NotBlank
+    private String refreshToken;
 }

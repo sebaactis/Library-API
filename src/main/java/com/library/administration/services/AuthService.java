@@ -11,6 +11,8 @@ import com.library.administration.utilities.Jwt.JwtUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -46,7 +48,7 @@ public class AuthService {
         return userRepository.save(user);
     }
 
-    public String login(LoginDTI userLogin) {
+    public Map<String, String> login(LoginDTI userLogin) {
         Optional<User> userFind = userRepository.findByEmail(userLogin.getEmail());
 
         if (userFind.isEmpty()) {
@@ -57,13 +59,21 @@ public class AuthService {
             throw new IllegalArgumentException("Invalid Password");
         }
 
-        return generateToken(userFind.get());
+        String accessToken = generateToken(userFind.get(), false);
+        String refreshToken = generateToken(userFind.get(), true);
+
+        saveToken(userFind.get().getEmail(), accessToken);
+        saveToken(userFind.get().getEmail(), refreshToken);
+
+        Map<String, String> tokens = new HashMap<>();
+        tokens.put("accessToken", accessToken);
+        tokens.put("refreshToken", refreshToken);
+
+        return tokens;
     }
 
-    public String generateToken(User user) {
-        String token = jwtUtil.generateToken(user.getEmail());
-        saveToken(user.getEmail(), token);
-        return token;
+    public String generateToken(User user, boolean isRefresh) {
+        return jwtUtil.generateToken(user.getEmail(), isRefresh);
     }
 
     private void saveToken(String email, String token) {
@@ -82,14 +92,22 @@ public class AuthService {
         }
 
         String email = jwtUtil.extractEmail(refreshToken);
-        String newToken = jwtUtil.generateToken(email);
+
+        Token tokenEntity = tokenRepository.findByToken(refreshToken)
+                .orElseThrow(() -> new IllegalArgumentException("Token not found"));
+
+        if (tokenEntity.isRevoked()) {
+            throw new IllegalArgumentException("Refresh token has been revoked");
+        }
+
+        String newToken = jwtUtil.generateToken(email, false);
         revokeToken(refreshToken);
         saveToken(email, newToken);
         return newToken;
-
     }
 
-    private void revokeToken(String token) {
+
+    public void revokeToken(String token) {
         Token tokenEntity = tokenRepository.findByToken(token)
                 .orElseThrow(() -> new IllegalArgumentException("Token not found"));
         tokenEntity.setRevoked(true);
