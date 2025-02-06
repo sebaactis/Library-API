@@ -21,12 +21,12 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/users")
 public class UserController {
     @Autowired
     private UserService userService;
 
-    @GetMapping("/users")
+    @GetMapping()
     public ResponseEntity<ApiResponse<List<UserDTO>>> findAll() {
         try {
             List<User> users = (List<User>) userService.findAll();
@@ -49,7 +49,7 @@ public class UserController {
         }
     }
 
-    @GetMapping("/users/{userId}")
+    @GetMapping("/{userId}")
     public ResponseEntity<ApiResponse<UserDTO>> findById(@PathVariable Long userId) {
         try {
             User user = userService.findById(userId);
@@ -71,7 +71,7 @@ public class UserController {
         }
     }
 
-    @PostMapping("/users")
+    @PostMapping()
     public ResponseEntity<ApiResponse<UserDTO>> create(@Valid @RequestBody UserDTI userRequest) {
         try {
             User user = userService.createHashedUser(userRequest);
@@ -93,7 +93,7 @@ public class UserController {
         }
     }
 
-    @PutMapping("/users/{userId}")
+    @PutMapping("/{userId}")
     public ResponseEntity<ApiResponse<UserDTO>> edit(@PathVariable Long userId, @Valid @RequestBody UserEditDTI requestUser) {
         try {
             User editUser = userService.findById(userId);
@@ -117,7 +117,7 @@ public class UserController {
         }
     }
 
-    @DeleteMapping("/users/{userId}")
+    @DeleteMapping("/{userId}")
     public ResponseEntity<ApiResponse<UserDTO>> delete(@PathVariable Long userId) {
         try {
             User existingUser = userService.findById(userId);

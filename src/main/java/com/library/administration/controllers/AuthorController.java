@@ -15,13 +15,13 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/authors")
 public class AuthorController {
 
     @Autowired
     private AuthorService authorService;
 
-    @GetMapping("authors")
+    @GetMapping()
     public ResponseEntity<ApiResponse<List<AuthorDTO>>> findAll() {
 
         try {
@@ -41,7 +41,7 @@ public class AuthorController {
         }
     }
 
-    @GetMapping("author/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<AuthorDTO>> findById(@PathVariable Long id) {
 
         try {
@@ -64,7 +64,7 @@ public class AuthorController {
         }
     }
 
-    @PostMapping("author")
+    @PostMapping()
     public ResponseEntity<ApiResponse<Author>> create(@Valid @RequestBody AuthorDTI authorRequest) {
         try {
             Author author = new Author();
@@ -86,7 +86,7 @@ public class AuthorController {
         }
     }
 
-    @PutMapping("author/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<AuthorDTO>> update(@PathVariable Long id, @Valid @RequestBody AuthorDTI authorRequest) {
 
         try {
@@ -119,7 +119,7 @@ public class AuthorController {
         }
     }
 
-    @DeleteMapping("author/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<AuthorDTO>> delete(@PathVariable Long id) {
 
         try {

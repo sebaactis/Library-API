@@ -3,12 +3,15 @@ package com.library.administration.security;
 import com.library.administration.models.entities.Token;
 import com.library.administration.repositories.TokenRepository;
 import com.library.administration.utilities.Jwt.JwtUtil;
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,6 +21,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
@@ -55,8 +59,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
             String email = jwtUtil.extractEmail(token);
 
-            if (email != null) {
-                UserDetails userDetails = new User(email, "", Collections.emptyList());
+            Claims claims = jwtUtil.extractClaims(token);
+            String role = claims.get("role", String.class);
+
+            if (email != null && role != null) {
+                List<GrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role));
+
+                UserDetails userDetails = new User(email, "", authorities);
 
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
@@ -65,7 +74,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         } catch (Exception e) {
-            System.out.println("JWT inválido: " + e.getMessage());
+            System.out.println("JWT invalido: " + e.getMessage());
         }
 
         chain.doFilter(request, response);

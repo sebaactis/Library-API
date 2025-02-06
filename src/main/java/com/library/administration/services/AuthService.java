@@ -8,6 +8,7 @@ import com.library.administration.models.entities.User;
 import com.library.administration.repositories.TokenRepository;
 import com.library.administration.repositories.UserRepository;
 import com.library.administration.utilities.Jwt.JwtUtil;
+import io.jsonwebtoken.Claims;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -73,7 +74,7 @@ public class AuthService {
     }
 
     public String generateToken(User user, boolean isRefresh) {
-        return jwtUtil.generateToken(user.getEmail(), isRefresh);
+        return jwtUtil.generateToken(user.getEmail(), user.getRole(), isRefresh);
     }
 
     private void saveToken(String email, String token) {
@@ -92,6 +93,8 @@ public class AuthService {
         }
 
         String email = jwtUtil.extractEmail(refreshToken);
+        Claims claims = jwtUtil.extractClaims(refreshToken);
+        String role = claims.get("role", String.class);
 
         Token tokenEntity = tokenRepository.findByToken(refreshToken)
                 .orElseThrow(() -> new IllegalArgumentException("Token not found"));
@@ -100,7 +103,7 @@ public class AuthService {
             throw new IllegalArgumentException("Refresh token has been revoked");
         }
 
-        String newToken = jwtUtil.generateToken(email, false);
+        String newToken = jwtUtil.generateToken(email, Role.valueOf(role), false);
         revokeToken(refreshToken);
         saveToken(email, newToken);
         return newToken;

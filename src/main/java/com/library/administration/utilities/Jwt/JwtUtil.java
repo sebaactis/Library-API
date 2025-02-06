@@ -1,5 +1,6 @@
 package com.library.administration.utilities.Jwt;
 
+import com.library.administration.models.entities.Role;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -27,11 +28,12 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateToken(String email, boolean isRefresh) {
+    public String generateToken(String email, Role role, boolean isRefresh) {
         long expirationTime = isRefresh ? refreshExpiration : expiration;
 
         return Jwts.builder()
                 .setSubject(email)
+                .claim("role", role.name())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
