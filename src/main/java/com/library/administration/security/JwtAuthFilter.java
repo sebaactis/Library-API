@@ -63,6 +63,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 throw new IllegalArgumentException("Access token not found");
             }
 
+            Token tokenEntity = tokenRepository.findByToken(accessToken)
+                    .orElseThrow(() -> new IllegalArgumentException("Token not found"));
+
             if (jwtUtil.IsTokenExpired(accessToken)) {
                 if (refreshToken == null) {
                     throw new IllegalArgumentException("Refresh token not found");
@@ -71,11 +74,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 String newAccessToken = tokenRefreshService.refreshToken(refreshToken);
                 Cookie cookie = cookieUtil.createCookie("accessToken", newAccessToken, false);
                 response.addCookie(cookie);
+                tokenEntity.setExpired(true);
                 accessToken = newAccessToken;
             }
 
-            Token tokenEntity = tokenRepository.findByToken(accessToken)
-                    .orElseThrow(() -> new IllegalArgumentException("Token not found"));
             if (tokenEntity.isRevoked() || tokenEntity.isExpired()) {
                 throw new IllegalArgumentException("Token revoked or expired");
             }
