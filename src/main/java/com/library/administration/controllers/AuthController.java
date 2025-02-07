@@ -7,8 +7,10 @@ import com.library.administration.models.dti.RegisterDTO;
 import com.library.administration.models.entities.Author;
 import com.library.administration.models.entities.User;
 import com.library.administration.services.AuthService;
+import com.library.administration.services.TokenRefreshService;
 import com.library.administration.utilities.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +28,9 @@ import java.util.Map;
 public class AuthController {
     @Autowired
     private AuthService authService;
+
+    @Autowired
+    private TokenRefreshService tokenRefreshService;
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<RegisterDTO>> register(@Valid @RequestBody RegisterDTI userRegister) {
@@ -47,19 +52,13 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<LoginDTO>> login(@Valid @RequestBody LoginDTI userLogin) {
+    public ResponseEntity<ApiResponse<LoginDTO>> login(@Valid @RequestBody LoginDTI userLogin, HttpServletResponse httpResponse) {
         try {
-            Map<String, String> tokens = authService.login(userLogin);
-
-            if (tokens == null) {
-                throw new IllegalStateException("Failed to login");
-            }
+            authService.login(httpResponse, userLogin);
 
             LoginDTO userLoginDTO = new LoginDTO(
                     userLogin.getEmail(),
-                    userLogin.getUsername(),
-                    tokens.get("accessToken"),
-                    tokens.get("refreshToken")
+                    userLogin.getUsername()
             );
 
             ApiResponse<LoginDTO> response = new ApiResponse<>("Login successfully", userLoginDTO);
@@ -74,7 +73,7 @@ public class AuthController {
     @PostMapping("/refresh")
     public ResponseEntity<ApiResponse<String>> refreshToken(@RequestBody String token) {
         try {
-            String newAccessToken = authService.refreshToken(token);
+            String newAccessToken = tokenRefreshService.refreshToken(token);
             ApiResponse<String> response = new ApiResponse<>("Token has been refreshed successfully", newAccessToken);
             return ResponseEntity.status(HttpStatus.OK).body(response);
 

@@ -7,8 +7,11 @@ import com.library.administration.models.entities.Token;
 import com.library.administration.models.entities.User;
 import com.library.administration.repositories.TokenRepository;
 import com.library.administration.repositories.UserRepository;
-import com.library.administration.utilities.Jwt.JwtUtil;
+import com.library.administration.utilities.cookies.CookieUtil;
+import com.library.administration.utilities.jwt.JwtUtil;
 import io.jsonwebtoken.Claims;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -23,12 +26,14 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final TokenRepository tokenRepository;
+    private final CookieUtil cookieUtil;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil, TokenRepository tokenRepository) {
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil, TokenRepository tokenRepository, CookieUtil cookieUtil) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.tokenRepository = tokenRepository;
+        this.cookieUtil = cookieUtil;
     }
 
     public User register(RegisterDTI userRegister) {
@@ -49,7 +54,7 @@ public class AuthService {
         return userRepository.save(user);
     }
 
-    public Map<String, String> login(LoginDTI userLogin) {
+    public void login(HttpServletResponse response, LoginDTI userLogin) {
         Optional<User> userFind = userRepository.findByEmail(userLogin.getEmail());
 
         if (userFind.isEmpty()) {
@@ -66,11 +71,11 @@ public class AuthService {
         saveToken(userFind.get().getEmail(), accessToken);
         saveToken(userFind.get().getEmail(), refreshToken);
 
-        Map<String, String> tokens = new HashMap<>();
-        tokens.put("accessToken", accessToken);
-        tokens.put("refreshToken", refreshToken);
+        Cookie accessTokenCookie = cookieUtil.createCookie("accessToken", accessToken, false);
+        Cookie refreshTokenCookie = cookieUtil.createCookie("refreshToken", refreshToken, true);
 
-        return tokens;
+        response.addCookie(accessTokenCookie);
+        response.addCookie(refreshTokenCookie);
     }
 
     public String generateToken(User user, boolean isRefresh) {
@@ -86,29 +91,6 @@ public class AuthService {
         tokenEntity.setExpired(false);
         tokenRepository.save(tokenEntity);
     }
-
-    public String refreshToken(String refreshToken) {
-        if (jwtUtil.IsTokenExpired(refreshToken)) {
-            throw new IllegalArgumentException("Refresh token expired");
-        }
-
-        String email = jwtUtil.extractEmail(refreshToken);
-        Claims claims = jwtUtil.extractClaims(refreshToken);
-        String role = claims.get("role", String.class);
-
-        Token tokenEntity = tokenRepository.findByToken(refreshToken)
-                .orElseThrow(() -> new IllegalArgumentException("Token not found"));
-
-        if (tokenEntity.isRevoked()) {
-            throw new IllegalArgumentException("Refresh token has been revoked");
-        }
-
-        String newToken = jwtUtil.generateToken(email, Role.valueOf(role), false);
-        revokeToken(refreshToken);
-        saveToken(email, newToken);
-        return newToken;
-    }
-
 
     public void revokeToken(String token) {
         Token tokenEntity = tokenRepository.findByToken(token)

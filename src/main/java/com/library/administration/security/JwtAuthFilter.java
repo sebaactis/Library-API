@@ -2,13 +2,16 @@ package com.library.administration.security;
 
 import com.library.administration.models.entities.Token;
 import com.library.administration.repositories.TokenRepository;
-import com.library.administration.utilities.Jwt.JwtUtil;
+import com.library.administration.services.AuthService;
+import com.library.administration.services.TokenRefreshService;
+import com.library.administration.utilities.cookies.CookieUtil;
+import com.library.administration.utilities.jwt.JwtUtil;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -28,50 +31,69 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final TokenRepository tokenRepository;
+    private final TokenRefreshService tokenRefreshService; // Nuevo servicio
+    private final CookieUtil cookieUtil;
 
-    public JwtAuthFilter(JwtUtil jwtUtil, TokenRepository tokenRepository) {
+    public JwtAuthFilter(JwtUtil jwtUtil, TokenRepository tokenRepository, TokenRefreshService tokenRefreshService, CookieUtil cookieUtil) {
         this.jwtUtil = jwtUtil;
         this.tokenRepository = tokenRepository;
+        this.tokenRefreshService = tokenRefreshService;
+        this.cookieUtil = cookieUtil;
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
-        String authorizationHeader = request.getHeader("Authorization");
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
+            throws ServletException, IOException {
+        Cookie[] cookies = request.getCookies();
+        String accessToken = null;
+        String refreshToken = null;
 
-        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-            chain.doFilter(request, response);
-            return;
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("accessToken".equals(cookie.getName())) {
+                    accessToken = cookie.getValue();
+                } else if ("refreshToken".equals(cookie.getName())) {
+                    refreshToken = cookie.getValue();
+                }
+            }
         }
 
-        String token = authorizationHeader.substring(7);
-
         try {
-            if (jwtUtil.IsTokenExpired(token)) {
-                throw new IllegalArgumentException("Token expired");
+            if (accessToken == null) {
+                throw new IllegalArgumentException("Access token not found");
             }
 
-            Token tokenEntity = tokenRepository.findByToken(token)
-                    .orElseThrow(() -> new IllegalArgumentException("Token not found"));
+            if (jwtUtil.IsTokenExpired(accessToken)) {
+                if (refreshToken == null) {
+                    throw new IllegalArgumentException("Refresh token not found");
+                }
 
+                String newAccessToken = tokenRefreshService.refreshToken(refreshToken);
+                Cookie cookie = cookieUtil.createCookie("accessToken", newAccessToken, false);
+                response.addCookie(cookie);
+                accessToken = newAccessToken;
+            }
+
+            Token tokenEntity = tokenRepository.findByToken(accessToken)
+                    .orElseThrow(() -> new IllegalArgumentException("Token not found"));
             if (tokenEntity.isRevoked() || tokenEntity.isExpired()) {
                 throw new IllegalArgumentException("Token revoked or expired");
             }
 
-            String email = jwtUtil.extractEmail(token);
-
-            Claims claims = jwtUtil.extractClaims(token);
+            String email = jwtUtil.extractEmail(accessToken);
+            Claims claims = jwtUtil.extractClaims(accessToken);
             String role = claims.get("role", String.class);
 
             if (email != null && role != null) {
                 List<GrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role));
-
                 UserDetails userDetails = new User(email, "", authorities);
-
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                System.out.println("Usuario autenticado: " + email + ", Roles: " + role);
+
             }
         } catch (Exception e) {
             System.out.println("JWT invalido: " + e.getMessage());

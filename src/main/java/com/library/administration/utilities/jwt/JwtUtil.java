@@ -1,4 +1,4 @@
-package com.library.administration.utilities.Jwt;
+package com.library.administration.utilities.jwt;
 
 import com.library.administration.models.entities.Role;
 import io.jsonwebtoken.Claims;
