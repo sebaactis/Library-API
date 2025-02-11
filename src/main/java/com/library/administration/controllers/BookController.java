@@ -1,16 +1,16 @@
 package com.library.administration.controllers;
 
 import com.library.administration.models.dti.BookDTI;
-import com.library.administration.models.dto.AuthorDTO;
 import com.library.administration.models.dto.BookDTO;
-import com.library.administration.models.entities.Author;
 import com.library.administration.models.entities.Book;
 import com.library.administration.services.implementation.BookService;
+import com.library.administration.services.implementation.RatingService;
 import com.library.administration.utilities.ApiResponse;
 import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,25 +24,35 @@ public class BookController {
     @Autowired
     private BookService bookService;
 
+    @Autowired
+    private RatingService ratingService;
+
     @GetMapping("books")
-    public ResponseEntity<ApiResponse<List<BookDTO>>> findAll() {
+    public ResponseEntity<ApiResponse<Page<BookDTO>>> findAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sort,
+            @RequestParam(defaultValue = "asc") String direction
+    ) {
         try {
-            List<Book> books = (List<Book>) bookService.findAll();
+
+            if (size <= 0 || page < 0) {
+                ApiResponse<Page<BookDTO>> response = new ApiResponse<>("Size or page not valid (size must be > 0 and page 0 or more)", null);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+
+            Page<BookDTO> books = bookService.findAll(page, size, sort, direction);
 
             if (books.isEmpty()) {
-                ApiResponse<List<BookDTO>> response = new ApiResponse<>("We don´t have books yet", null);
+                ApiResponse<Page<BookDTO>> response = new ApiResponse<>("We don´t have books yet", null);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
             }
 
-            ModelMapper modelMapper = new ModelMapper();
-            List<BookDTO> booksDTO = modelMapper.map(books, new TypeToken<List<BookDTO>>() {
-            }.getType());
-
-            ApiResponse<List<BookDTO>> response = new ApiResponse<>("Get authors successfully", booksDTO);
+            ApiResponse<Page<BookDTO>> response = new ApiResponse<>("Get books successfully", books);
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            ApiResponse<List<BookDTO>> response = new ApiResponse<>(e.getMessage(), null);
+            ApiResponse<Page<BookDTO>> response = new ApiResponse<>(e.getMessage(), null);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }

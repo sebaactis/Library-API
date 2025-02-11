@@ -8,6 +8,7 @@ import com.library.administration.utilities.ApiResponse;
 import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,21 +23,26 @@ public class AuthorController {
     private AuthorService authorService;
 
     @GetMapping()
-    public ResponseEntity<ApiResponse<List<AuthorDTO>>> findAll() {
+    public ResponseEntity<ApiResponse<Page<AuthorDTO>>> findAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sort,
+            @RequestParam(defaultValue = "asc") String direction
+    ) {
 
         try {
-            List<AuthorDTO> authors = authorService.findAllAuthors();
+            Page<AuthorDTO> authors = authorService.findAllAuthors(page, size, sort, direction);
 
             if (authors.isEmpty()) {
-                ApiResponse<List<AuthorDTO>> response = new ApiResponse<>("We don´t have authors yet", null);
+                ApiResponse<Page<AuthorDTO>> response = new ApiResponse<>("We don´t have authors yet", null);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
             }
 
-            ApiResponse<List<AuthorDTO>> response = new ApiResponse<>("Get authors successfully", authors);
+            ApiResponse<Page<AuthorDTO>> response = new ApiResponse<>("Get authors successfully", authors);
             return ResponseEntity.status(HttpStatus.OK).body(response);
 
         } catch (Exception e) {
-            ApiResponse<List<AuthorDTO>> response = new ApiResponse<>(e.getMessage(), null);
+            ApiResponse<Page<AuthorDTO>> response = new ApiResponse<>(e.getMessage(), null);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }

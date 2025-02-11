@@ -1,10 +1,9 @@
 package com.library.administration.controllers;
 
 import com.library.administration.models.dti.LoginDTI;
-import com.library.administration.models.dti.LoginDTO;
 import com.library.administration.models.dti.RegisterDTI;
 import com.library.administration.models.dti.RegisterDTO;
-import com.library.administration.models.entities.Author;
+import com.library.administration.models.dto.LoginDTO;
 import com.library.administration.models.entities.User;
 import com.library.administration.services.AuthService;
 import com.library.administration.services.TokenRefreshService;
@@ -57,8 +56,7 @@ public class AuthController {
             authService.login(httpResponse, userLogin);
 
             LoginDTO userLoginDTO = new LoginDTO(
-                    userLogin.getEmail(),
-                    userLogin.getUsername()
+                    userLogin.getEmail()
             );
 
             ApiResponse<LoginDTO> response = new ApiResponse<>("Login successfully", userLoginDTO);

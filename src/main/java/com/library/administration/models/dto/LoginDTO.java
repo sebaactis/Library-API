@@ -1,4 +1,4 @@
-package com.library.administration.models.dti;
+package com.library.administration.models.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -13,7 +13,4 @@ public class LoginDTO {
     @Email
     @NotBlank
     private String email;
-
-    @NotBlank
-    private String username;
 }
