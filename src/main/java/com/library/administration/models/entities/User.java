@@ -25,11 +25,17 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Column(columnDefinition = "TEXT", nullable = true)
+    private String profilePictureUrl;
+
+    @Column(columnDefinition = "TEXT", nullable = true)
+    private String preferences;
+
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL,  orphanRemoval = true)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Rating> ratings = new ArrayList<>();
 }
 

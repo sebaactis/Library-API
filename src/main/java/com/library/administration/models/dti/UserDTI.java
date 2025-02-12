@@ -2,6 +2,7 @@ package com.library.administration.models.dti;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Null;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -25,4 +26,10 @@ public class UserDTI {
 
     @NotNull(message = "Role cannot be empty")
     private String role;
+
+    @Size(max = 500, message = "The size of the picture cannot exceed 500 characters")
+    private String profilePictureUrl;
+
+    @Size(max = 200, message = "Preferences cannot exceed 200 characters")
+    private String preferences;
 }

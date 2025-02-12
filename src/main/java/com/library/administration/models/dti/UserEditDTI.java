@@ -11,7 +11,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserEditDTI {
-    @NotNull(message = "Username cannot be empty")
     @Size(min = 6, max = 15, message = "The username need to have at least 6 characters and not more than 15 characters")
     private String username;
 
@@ -19,9 +18,11 @@ public class UserEditDTI {
     private String password;
 
     @Email
-    @NotNull(message = "Email cannot be empty")
     private String email;
 
-    @NotNull(message = "Role cannot be empty")
     private String role;
+
+    private String profilePictureUrl;
+
+    private String preferences;
 }

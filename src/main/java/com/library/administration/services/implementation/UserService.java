@@ -9,6 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
+import java.util.function.Consumer;
 
 @Service
 public class UserService extends ServiceImple<User, Long> {
@@ -45,21 +46,25 @@ public class UserService extends ServiceImple<User, Long> {
 
     public User editUser(User editUser, UserEditDTI requestUser) {
 
-        if (requestUser.getUsername() != null) {
-            editUser.setUsername(requestUser.getUsername());
-        }
-        if (requestUser.getEmail() != null) {
-            editUser.setEmail(requestUser.getEmail());
-        }
+        updateField(editUser::setUsername, requestUser.getUsername());
+        updateField(editUser::setEmail, requestUser.getEmail());
+        updateField(editUser::setProfilePictureUrl, requestUser.getProfilePictureUrl());
+        updateField(editUser::setPreferences, requestUser.getPreferences());
+
         if (requestUser.getRole() != null) {
             if (!isValidRole(requestUser.getRole())) {
                 throw new IllegalArgumentException("Role not valid: " + requestUser.getRole());
             }
-
             editUser.setRole(Role.valueOf(requestUser.getRole().toUpperCase()));
         }
 
         return userRepository.save(editUser);
+    }
+
+    private <T> void updateField(Consumer<T> setter, T value) {
+        if (value != null) {
+            setter.accept(value);
+        }
     }
 
     private boolean isValidRole(String role) {
