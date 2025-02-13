@@ -33,6 +33,9 @@ public class Book {
     @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Rating> ratings = new ArrayList<>();
 
+    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<WishList> wishListEntries = new ArrayList<>();
+
     public Double getAverageRating() {
         if (ratings == null || ratings.isEmpty()) {
             return 0.0;
