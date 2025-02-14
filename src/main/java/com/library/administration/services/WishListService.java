@@ -6,7 +6,6 @@ import com.library.administration.models.entities.WishList;
 import com.library.administration.repositories.BookRepository;
 import com.library.administration.repositories.UserRepository;
 import com.library.administration.repositories.WishListRepository;
-import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -21,10 +20,13 @@ public class WishListService {
     private final UserRepository userRepository;
     private final BookRepository bookRepository;
 
-    public WishListService(WishListRepository wishListRepository, UserRepository userRepository, BookRepository bookRepository) {
+    private final NotificationService notificationService;
+
+    public WishListService(WishListRepository wishListRepository, UserRepository userRepository, BookRepository bookRepository, NotificationService notificationService) {
         this.wishListRepository = wishListRepository;
         this.userRepository = userRepository;
         this.bookRepository = bookRepository;
+        this.notificationService = notificationService;
     }
 
     public WishList addBookToWishList(Long userId, Long bookId) {
@@ -43,6 +45,9 @@ public class WishListService {
         String formattedDate = formatter.format(date);
 
         WishList wishListEntry = new WishList(user, book);
+        String message = "The book '" + book.getTitle() + "' was added to your wish list";
+        notificationService.createNotification(user.getId(), message);
+
         return wishListRepository.save(wishListEntry);
     }
 
@@ -53,9 +58,18 @@ public class WishListService {
     public void removeBookFromWishList(Long userId, Long bookId) {
         WishList wishListEntry = wishListRepository.findByUserIdAndBookId(userId, bookId);
 
-        if(wishListEntry == null) {
+        if (wishListEntry == null) {
             throw new RuntimeException("Wish List entry not found");
         }
+
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new RuntimeException("Book not found"));
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        String message = "The book '" + book.getTitle() + "' was eliminated from your wish list.";
+        notificationService.createNotification(user.getId(), message);
 
         wishListRepository.delete(wishListEntry);
     }

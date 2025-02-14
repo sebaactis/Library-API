@@ -31,7 +31,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final TokenRepository tokenRepository;
-    private final TokenRefreshService tokenRefreshService; // Nuevo servicio
+    private final TokenRefreshService tokenRefreshService;
     private final CookieUtil cookieUtil;
 
     public JwtAuthFilter(JwtUtil jwtUtil, TokenRepository tokenRepository, TokenRefreshService tokenRefreshService, CookieUtil cookieUtil) {
