@@ -1,6 +1,7 @@
 package com.library.administration.services;
 
 import com.library.administration.models.dti.LoginDTI;
+import com.library.administration.models.dti.RecoveryPasswordDTI;
 import com.library.administration.models.dti.RegisterDTI;
 import com.library.administration.models.entities.Role;
 import com.library.administration.models.entities.Token;
@@ -9,14 +10,10 @@ import com.library.administration.repositories.TokenRepository;
 import com.library.administration.repositories.UserRepository;
 import com.library.administration.utilities.cookies.CookieUtil;
 import com.library.administration.utilities.jwt.JwtUtil;
-import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -28,7 +25,8 @@ public class AuthService {
     private final TokenRepository tokenRepository;
     private final CookieUtil cookieUtil;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil, TokenRepository tokenRepository, CookieUtil cookieUtil) {
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil,
+            TokenRepository tokenRepository, CookieUtil cookieUtil) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
@@ -76,6 +74,43 @@ public class AuthService {
 
         response.addCookie(accessTokenCookie);
         response.addCookie(refreshTokenCookie);
+    }
+
+    public String resetPasswordInit(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        String recoveryToken = generateToken(user, false);
+        saveToken(email, recoveryToken);
+
+        return recoveryToken;
+    }
+
+    public String resetPassword(RecoveryPasswordDTI recoveryPasswordDTI) {
+
+        String token = recoveryPasswordDTI.getToken();
+
+        Token tokenEntity = tokenRepository.findByToken(token)
+                .orElseThrow(() -> new RuntimeException("Token not found"));
+
+        if (tokenEntity.isRevoked() || tokenEntity.isExpired()) {
+            throw new RuntimeException("Token is invalid or expired");
+        }
+
+        String email = jwtUtil.extractEmail(recoveryPasswordDTI.getToken());
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!recoveryPasswordDTI.getPassword().equalsIgnoreCase(recoveryPasswordDTI.getConfirmPassword())) {
+            throw new IllegalArgumentException("The passwords do not match");
+        }
+
+        user.setPassword(passwordEncoder.encode(recoveryPasswordDTI.getPassword()));
+        userRepository.save(user);
+
+        return email;
+
     }
 
     public String generateToken(User user, boolean isRefresh) {

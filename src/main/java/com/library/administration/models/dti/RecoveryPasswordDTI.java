@@ -1,4 +1,4 @@
-package com.library.administration.models.dto;
+package com.library.administration.models.dti;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -7,13 +7,17 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
-public class RegisterDTO {
-    @Email
+@NoArgsConstructor
+public class RecoveryPasswordDTI {
+     
     @NotBlank
-    private String email;
+    private String password;
 
     @NotBlank
-    private String username;
+    private String confirmPassword;
+
+    @NotBlank
+    private String token;
+
 }

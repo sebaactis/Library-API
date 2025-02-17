@@ -1,12 +1,8 @@
 package com.library.administration.controllers;
 
-import com.library.administration.models.dti.BookDTI;
 import com.library.administration.models.dti.UserDTI;
 import com.library.administration.models.dti.UserEditDTI;
-import com.library.administration.models.dto.BookDTO;
 import com.library.administration.models.dto.UserDTO;
-import com.library.administration.models.entities.Book;
-import com.library.administration.models.entities.Role;
 import com.library.administration.models.entities.User;
 import com.library.administration.services.implementation.UserService;
 import com.library.administration.utilities.ApiResponse;
