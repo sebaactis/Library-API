@@ -8,7 +8,6 @@ import com.library.administration.repositories.UserRepository;
 import com.library.administration.repositories.WishListRepository;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -19,14 +18,15 @@ public class WishListService {
     private final WishListRepository wishListRepository;
     private final UserRepository userRepository;
     private final BookRepository bookRepository;
-
+    private final MailService mailService;
     private final NotificationService notificationService;
 
-    public WishListService(WishListRepository wishListRepository, UserRepository userRepository, BookRepository bookRepository, NotificationService notificationService) {
+    public WishListService(WishListRepository wishListRepository, UserRepository userRepository, BookRepository bookRepository, NotificationService notificationService, MailService mailService) {
         this.wishListRepository = wishListRepository;
         this.userRepository = userRepository;
         this.bookRepository = bookRepository;
         this.notificationService = notificationService;
+        this.mailService = mailService;
     }
 
     public WishList addBookToWishList(Long userId, Long bookId) {
@@ -45,8 +45,9 @@ public class WishListService {
         String formattedDate = formatter.format(date);
 
         WishList wishListEntry = new WishList(user, book);
-        String message = "The book '" + book.getTitle() + "' was added to your wish list";
+        String message = "The book '" + book.getTitle() + "' was added to your wish list at " + formattedDate;
         notificationService.createNotification(user.getId(), message);
+        mailService.sendMail(user.getEmail(), "Book added to your wish list", message);
 
         return wishListRepository.save(wishListEntry);
     }
@@ -70,6 +71,7 @@ public class WishListService {
 
         String message = "The book '" + book.getTitle() + "' was eliminated from your wish list.";
         notificationService.createNotification(user.getId(), message);
+        mailService.sendMail(user.getEmail(), "Book removed to your wish list", message);
 
         wishListRepository.delete(wishListEntry);
     }
