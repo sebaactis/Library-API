@@ -16,8 +16,4 @@ public class RecoveryPasswordDTI {
 
     @NotBlank
     private String confirmPassword;
-
-    @NotBlank
-    private String token;
-
 }

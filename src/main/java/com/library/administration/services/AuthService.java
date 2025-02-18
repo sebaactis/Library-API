@@ -24,14 +24,16 @@ public class AuthService {
     private final JwtUtil jwtUtil;
     private final TokenRepository tokenRepository;
     private final CookieUtil cookieUtil;
+    private final MailService mailService;
 
     public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil,
-            TokenRepository tokenRepository, CookieUtil cookieUtil) {
+            TokenRepository tokenRepository, CookieUtil cookieUtil, MailService mailService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.tokenRepository = tokenRepository;
         this.cookieUtil = cookieUtil;
+        this.mailService = mailService;
     }
 
     public User register(RegisterDTI userRegister) {
@@ -83,12 +85,12 @@ public class AuthService {
         String recoveryToken = generateToken(user, false);
         saveToken(email, recoveryToken);
 
-        return recoveryToken;
+        mailService.sendPasswordResetEmail(email, recoveryToken);
+
+        return email;
     }
 
-    public String resetPassword(RecoveryPasswordDTI recoveryPasswordDTI) {
-
-        String token = recoveryPasswordDTI.getToken();
+    public String resetPassword(RecoveryPasswordDTI recoveryPasswordDTI, String token) {
 
         Token tokenEntity = tokenRepository.findByToken(token)
                 .orElseThrow(() -> new RuntimeException("Token not found"));
@@ -97,7 +99,7 @@ public class AuthService {
             throw new RuntimeException("Token is invalid or expired");
         }
 
-        String email = jwtUtil.extractEmail(recoveryPasswordDTI.getToken());
+        String email = jwtUtil.extractEmail(token);
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));

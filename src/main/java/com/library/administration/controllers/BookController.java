@@ -8,14 +8,11 @@ import com.library.administration.services.implementation.RatingService;
 import com.library.administration.utilities.ApiResponse;
 import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
-import org.modelmapper.TypeToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -23,9 +20,6 @@ public class BookController {
 
     @Autowired
     private BookService bookService;
-
-    @Autowired
-    private RatingService ratingService;
 
     @GetMapping("books")
     public ResponseEntity<ApiResponse<Page<BookDTO>>> findAll(

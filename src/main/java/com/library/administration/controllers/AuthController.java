@@ -19,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController()
@@ -88,9 +89,9 @@ public class AuthController {
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<ApiResponse<String>> resetPassword(@RequestBody @Valid RecoveryPasswordDTI recoveryPasswordDTI) {
+    public ResponseEntity<ApiResponse<String>> resetPassword(@RequestParam String token, @RequestBody @Valid RecoveryPasswordDTI recoveryPasswordDTI) {
         try {
-            String recovery = authService.resetPassword(recoveryPasswordDTI);
+            String recovery = authService.resetPassword(recoveryPasswordDTI, token);
 
             if(recovery == null) {
                 ApiResponse<String> response = new ApiResponse<>("Password cannot be reset, try again", null);
