@@ -22,8 +22,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
@@ -83,18 +86,28 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
             String email = jwtUtil.extractEmail(accessToken);
             Claims claims = jwtUtil.extractClaims(accessToken);
-            String role = claims.get("role", String.class);
+            String roles = claims.get("roles", String.class);
 
-            if (email != null && role != null) {
-                List<GrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role));
+            if (email != null && roles != null) {
+
+                Pattern pattern = Pattern.compile("Role\\(id=\\d+, name=(\\w+)\\)");
+                Matcher matcher = pattern.matcher(roles);
+            
+                List<GrantedAuthority> authorities = new ArrayList<>();
+                while (matcher.find()) {
+                    String roleName = matcher.group(1);
+                    authorities.add(new SimpleGrantedAuthority("ROLE_" + roleName));
+                }
+            
+                System.out.println("Authorities: " + authorities);
+            
                 UserDetails userDetails = new User(email, "", authorities);
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-
-                System.out.println("Usuario autenticado: " + email + ", Roles: " + role);
-
+            
+                System.out.println("Usuario autenticado: " + email + ", Roles: " + roles);
             }
         } catch (Exception e) {
             System.out.println("JWT invalido: " + e.getMessage());

@@ -6,6 +6,7 @@ import com.library.administration.models.dti.RegisterDTI;
 import com.library.administration.models.entities.Role;
 import com.library.administration.models.entities.Token;
 import com.library.administration.models.entities.User;
+import com.library.administration.repositories.RoleRepository;
 import com.library.administration.repositories.TokenRepository;
 import com.library.administration.repositories.UserRepository;
 import com.library.administration.utilities.cookies.CookieUtil;
@@ -14,6 +15,8 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -25,15 +28,17 @@ public class AuthService {
     private final TokenRepository tokenRepository;
     private final CookieUtil cookieUtil;
     private final MailService mailService;
+    private final RoleRepository roleRepository;
 
     public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil,
-            TokenRepository tokenRepository, CookieUtil cookieUtil, MailService mailService) {
+            TokenRepository tokenRepository, CookieUtil cookieUtil, MailService mailService, RoleRepository roleRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.tokenRepository = tokenRepository;
         this.cookieUtil = cookieUtil;
         this.mailService = mailService;
+        this.roleRepository = roleRepository;
     }
 
     public User register(RegisterDTI userRegister) {
@@ -49,8 +54,9 @@ public class AuthService {
         user.setEmail(userRegister.getEmail());
         user.setUsername(userRegister.getUsername());
         user.setPassword(passwordEncoder.encode(userRegister.getPassword()));
-        user.setRole(Role.USER);
-
+        Role userRole = roleRepository.findByName("USER")
+                .orElseThrow(() -> new RuntimeException("Role USER not found"));
+        user.setRoles(List.of(userRole));
         return userRepository.save(user);
     }
 
@@ -116,7 +122,8 @@ public class AuthService {
     }
 
     public String generateToken(User user, boolean isRefresh) {
-        return jwtUtil.generateToken(user.getEmail(), user.getRole(), isRefresh);
+
+        return jwtUtil.generateToken(user.getEmail(), user.getRoles(), isRefresh);
     }
 
     private void saveToken(String email, String token) {

@@ -2,7 +2,6 @@ package com.library.administration.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -27,8 +26,8 @@ public class SecurityConfig {
         http.csrf().disable()
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**").permitAll()
-                        .requestMatchers("/api/v1/users/**").hasRole("ADMIN")
-                        .requestMatchers("/api/v1/authors/**").hasAnyRole("ADMIN", "MODERATOR")
+                        .requestMatchers("/api/v1/users/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers("/api/v1/authors/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_MODERATOR")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

@@ -4,43 +4,49 @@ import com.library.administration.models.dti.UserDTI;
 import com.library.administration.models.dti.UserEditDTI;
 import com.library.administration.models.entities.Role;
 import com.library.administration.models.entities.User;
+import com.library.administration.repositories.RoleRepository;
 import com.library.administration.repositories.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
+import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService extends ServiceImple<User, Long> {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RoleRepository roleRepository;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository) {
         super(userRepository);
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.roleRepository = roleRepository;
     }
 
     public User createHashedUser(UserDTI userRequest) {
-
+    
         if (userRepository.existsByEmail(userRequest.getEmail())) {
-            throw new IllegalArgumentException("The email: " + userRequest.getEmail() + " is already in use, choose another");
+            throw new IllegalArgumentException(
+                    "The email: " + userRequest.getEmail() + " is already in use, choose another");
         }
-
-        if (!isValidRole(userRequest.getRole())) {
-            throw new IllegalArgumentException("Role not valid: " + userRequest.getRole());
-        }
-
+    
+        List<Role> roles = userRequest.getRoles().stream()
+                .map(roleName -> roleRepository.findByName(roleName.toUpperCase())
+                        .orElseThrow(() -> new IllegalArgumentException("Role not valid: " + roleName)))
+                .collect(Collectors.toList());
+    
         User user = new User();
         user.setUsername(userRequest.getUsername());
         user.setEmail(userRequest.getEmail());
-        user.setRole(Role.valueOf(userRequest.getRole().toUpperCase()));
-
+        user.setRoles(roles);
+    
         String passwordHashed = passwordEncoder.encode(userRequest.getPassword());
         user.setPassword(passwordHashed);
-
+    
         return userRepository.save(user);
     }
 
@@ -50,14 +56,16 @@ public class UserService extends ServiceImple<User, Long> {
         updateField(editUser::setEmail, requestUser.getEmail());
         updateField(editUser::setProfilePictureUrl, requestUser.getProfilePictureUrl());
         updateField(editUser::setPreferences, requestUser.getPreferences());
-
-        if (requestUser.getRole() != null) {
-            if (!isValidRole(requestUser.getRole())) {
-                throw new IllegalArgumentException("Role not valid: " + requestUser.getRole());
-            }
-            editUser.setRole(Role.valueOf(requestUser.getRole().toUpperCase()));
+    
+        if (requestUser.getRoles() != null) {
+            
+            List<Role> roles = requestUser.getRoles().stream()
+                    .map(roleName -> roleRepository.findByName(roleName.toUpperCase())
+                            .orElseThrow(() -> new IllegalArgumentException("Role not valid: " + roleName)))
+                    .collect(Collectors.toList());
+            editUser.setRoles(roles);
         }
-
+    
         return userRepository.save(editUser);
     }
 
@@ -65,9 +73,5 @@ public class UserService extends ServiceImple<User, Long> {
         if (value != null) {
             setter.accept(value);
         }
-    }
-
-    private boolean isValidRole(String role) {
-        return Arrays.stream(Role.values()).anyMatch(enumValue -> enumValue.name().equalsIgnoreCase(role));
     }
 }

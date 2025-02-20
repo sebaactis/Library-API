@@ -31,9 +31,13 @@ public class User {
     @Column(columnDefinition = "TEXT", nullable = true)
     private String preferences;
 
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private Role role;
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "user_roles",
+        joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    private List<Role> roles = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Rating> ratings = new ArrayList<>();
@@ -41,4 +45,3 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<WishList> wishlist = new ArrayList<>();
 }
-

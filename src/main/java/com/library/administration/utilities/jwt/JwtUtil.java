@@ -11,6 +11,8 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class JwtUtil {
@@ -28,12 +30,16 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateToken(String email, Role role, boolean isRefresh) {
+    public String generateToken(String email, List<Role> roles, boolean isRefresh) {
         long expirationTime = isRefresh ? refreshExpiration : expiration;
+
+        String rolesString = roles.stream()
+        .map(role -> role.toString())
+        .collect(Collectors.joining(","));
 
         return Jwts.builder()
                 .setSubject(email)
-                .claim("role", role.name())
+                .claim("roles", rolesString)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)

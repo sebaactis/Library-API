@@ -1,5 +1,7 @@
 package com.library.administration.models.dti;
 
+import java.util.List;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Null;
@@ -25,7 +27,7 @@ public class UserDTI {
     private String email;
 
     @NotNull(message = "Role cannot be empty")
-    private String role;
+    private List<String> roles;
 
     @Size(max = 500, message = "The size of the picture cannot exceed 500 characters")
     private String profilePictureUrl;
