@@ -1,9 +1,8 @@
 package com.library.administration.controllers;
 
-import com.library.administration.models.dto.AuthorDTO;
 import com.library.administration.models.dto.RatingDTO;
 import com.library.administration.models.entities.Rating;
-import com.library.administration.services.implementation.RatingService;
+import com.library.administration.services.RatingService;
 import com.library.administration.utilities.ApiResponse;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;

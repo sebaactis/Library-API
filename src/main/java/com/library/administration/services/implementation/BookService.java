@@ -5,6 +5,7 @@ import com.library.administration.models.entities.Author;
 import com.library.administration.models.entities.Book;
 import com.library.administration.repositories.AuthorRepository;
 import com.library.administration.repositories.BookRepository;
+import com.library.administration.services.RatingService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;

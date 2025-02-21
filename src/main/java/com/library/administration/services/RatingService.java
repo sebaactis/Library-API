@@ -1,4 +1,4 @@
-package com.library.administration.services.implementation;
+package com.library.administration.services;
 
 import com.library.administration.models.entities.Book;
 import com.library.administration.models.entities.Rating;

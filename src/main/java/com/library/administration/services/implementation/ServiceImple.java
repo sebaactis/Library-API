@@ -2,7 +2,6 @@ package com.library.administration.services.implementation;
 
 import com.library.administration.services.IService;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.repository.CrudRepository;
 
 public abstract class ServiceImple<T, ID> implements IService<T, ID> {
     protected final JpaRepository<T, ID> repository;
