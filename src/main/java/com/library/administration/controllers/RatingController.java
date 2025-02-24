@@ -4,6 +4,9 @@ import com.library.administration.models.dto.RatingDTO;
 import com.library.administration.models.entities.Rating;
 import com.library.administration.services.RatingService;
 import com.library.administration.utilities.ApiResponse;
+
+import java.util.Map;
+
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -20,11 +23,11 @@ public class RatingController {
     public ResponseEntity<ApiResponse<RatingDTO>> addOrUpdateRating(
             @PathVariable Long userId,
             @PathVariable Long bookId,
-            @RequestParam Integer score
-    ) {
+            @RequestParam Integer score) {
         try {
             if (score < 1 || score > 5) {
-                ApiResponse<RatingDTO> response = new ApiResponse<>("The score cannot be less than 1 or more than 5", null);
+                ApiResponse<RatingDTO> response = new ApiResponse<>("The score cannot be less than 1 or more than 5",
+                        null);
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
 
@@ -47,14 +50,15 @@ public class RatingController {
     }
 
     @GetMapping("average/{bookId}")
-    public ResponseEntity<ApiResponse<Double>> getAverageRating(@PathVariable Long bookId) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getAverageRating(@PathVariable Long bookId) {
         try {
-            Double averageRating = ratingService.getAverageRatingForBook(bookId);
+            Map<String, Object> ratingData = ratingService.getMappingAverageRatingForBook(bookId);
 
-            ApiResponse<Double> response = new ApiResponse<>("Rating found it", averageRating);
+            ApiResponse<Map<String, Object>> response = new ApiResponse<>("Rating data retrieved successfully",
+                    ratingData);
             return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (Exception e) {
-            ApiResponse<Double> response = new ApiResponse<>(e.getMessage(), null);
+            ApiResponse<Map<String, Object>> response = new ApiResponse<>(e.getMessage(), null);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }

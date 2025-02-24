@@ -6,6 +6,10 @@ import com.library.administration.models.entities.User;
 import com.library.administration.repositories.BookRepository;
 import com.library.administration.repositories.RatingRepository;
 import com.library.administration.repositories.UserRepository;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -29,7 +33,7 @@ public class RatingService {
 
         Rating existingRating = ratingRepository.findByUserAndBook(user, book);
 
-        if(existingRating != null ) {
+        if (existingRating != null) {
             existingRating.setScore(score);
             return ratingRepository.save(existingRating);
         } else {
@@ -43,5 +47,17 @@ public class RatingService {
                 .orElseThrow(() -> new RuntimeException("Book not found"));
 
         return book.getAverageRating();
+    }
+
+    public Map<String, Object> getMappingAverageRatingForBook(Long bookId) {
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new RuntimeException("Book not found"));
+
+        Double averageRating = book.getAverageRating();
+        Map<String, Object> result = new HashMap<>();
+        result.put("averageRating", averageRating);
+        result.put("bookName", book.getTitle());
+
+        return result;
     }
 }

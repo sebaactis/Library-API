@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -75,6 +76,7 @@ public class BookController {
 
     }
 
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_MODERATOR')")
     @PostMapping("book/{authorId}")
     public ResponseEntity<ApiResponse<BookDTO>> create(@Valid @RequestBody BookDTI bookRequest, @PathVariable Long authorId) {
 
@@ -103,6 +105,7 @@ public class BookController {
         }
     }
 
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_MODERATOR')")
     @PutMapping("/book/{bookId}/{authorId}")
     public ResponseEntity<ApiResponse<BookDTO>> changeAuthor(@PathVariable Long bookId, @PathVariable Long authorId) {
         try {
@@ -124,6 +127,7 @@ public class BookController {
         }
     }
 
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_MODERATOR')")
     @PutMapping("/book/{bookId}")
     public ResponseEntity<ApiResponse<BookDTO>> edit(@PathVariable Long bookId, @Valid @RequestBody BookDTI requestBook) {
         try {
@@ -158,6 +162,7 @@ public class BookController {
         }
     }
 
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_MODERATOR')")
     @DeleteMapping("/book/{bookId}")
     public ResponseEntity<ApiResponse<BookDTO>> delete(@PathVariable Long bookId) {
         try {

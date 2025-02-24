@@ -1,13 +1,17 @@
 package com.library.administration.controllers;
 
 import com.library.administration.models.dto.WishListDTO;
+import com.library.administration.models.entities.User;
 import com.library.administration.models.entities.WishList;
 import com.library.administration.services.WishListService;
+import com.library.administration.services.implementation.UserService;
 import com.library.administration.utilities.ApiResponse;
+
+import org.apache.tomcat.util.http.parser.Authorization;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.core.Authentication;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,16 +19,21 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/wishlist")
 public class WishListController {
-    private final WishListService wishListService;
 
-    public WishListController(WishListService wishListService) {
+    private final WishListService wishListService;
+    private final UserService userService;
+
+    public WishListController(WishListService wishListService, UserService userService) {
         this.wishListService = wishListService;
+        this.userService = userService;
     }
 
-    @PostMapping("/{userId}/books/{bookId}")
-    public ResponseEntity<ApiResponse<WishListDTO>> addBookToWishList(@PathVariable Long userId, @PathVariable Long bookId) {
+    @PostMapping("/books/{bookId}")
+    public ResponseEntity<ApiResponse<WishListDTO>> addBookToWishList(Authentication authentication, @PathVariable Long bookId) {
         try {
-            WishList wishListAddBook = wishListService.addBookToWishList(userId, bookId);
+            String email = authentication.getName();
+            User user = userService.findByEmail(email);
+            WishList wishListAddBook = wishListService.addBookToWishList(user.getId(), bookId);
 
             if (wishListAddBook == null) {
                 ApiResponse<WishListDTO> response = new ApiResponse<>("Cannot add book to the wish list", null);
@@ -42,10 +51,12 @@ public class WishListController {
         }
     }
 
-    @GetMapping("/{userId}")
-    public ResponseEntity<ApiResponse<List<WishListDTO>>> getWishListByUser(@PathVariable Long userId) {
+    @GetMapping()
+    public ResponseEntity<ApiResponse<List<WishListDTO>>> getWishListByUser(Authentication authentication) {
         try {
-            List<WishList> wishList = wishListService.getWishListByUser(userId);
+            String email = authentication.getName();
+            User user = userService.findByEmail(email);
+            List<WishList> wishList = wishListService.getWishListByUser(user.getId());
 
             if (wishList == null) {
                 ApiResponse<List<WishListDTO>> response = new ApiResponse<>("Wish list not found", null);
@@ -67,10 +78,12 @@ public class WishListController {
         }
     }
 
-    @DeleteMapping("/{userId}/books/{bookId}")
-    public ResponseEntity<ApiResponse<String>> removeBookFromWishList(@PathVariable Long userId, @PathVariable Long bookId) {
+    @DeleteMapping("/books/{bookId}")
+    public ResponseEntity<ApiResponse<String>> removeBookFromWishList(Authentication authentication, @PathVariable Long bookId) {
         try {
-            wishListService.removeBookFromWishList(userId, bookId);
+            String email = authentication.getName();
+            User user = userService.findByEmail(email);
+            wishListService.removeBookFromWishList(user.getId(), bookId);
             ApiResponse<String> response = new ApiResponse<>("Book removed from the wish list successfully", null);
             return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (Exception e) {
